@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+)
 
 /* Types */
 
@@ -218,6 +221,9 @@ func generateImpl(set Set, i int, stack []Token) {
 	}
 }
 
+// Aliases generated so far (to detect clashes)
+var aliases = map[string]string{}
+
 // Print a single alias definition given its sequence of Tokens
 func printAlias(tokens []Token) {
 	alias, command := "k", "kubectl"
@@ -225,6 +231,15 @@ func printAlias(tokens []Token) {
 		alias += token.Short
 		command += " " + token.Long
 	}
+	if _, exists := aliases[alias]; exists {
+		fmt.Printf("\033[31m")
+		fmt.Printf("Error: conflicting aliases:\n")
+		fmt.Printf("  Existing: alias %s='%s'\n", alias, aliases[alias])
+		fmt.Printf("  New:      alias %s='%s'\n", alias, command)
+		fmt.Printf("\033[m")
+		os.Exit(1)
+	}
+	aliases[alias] = command
 	line := fmt.Sprintf("alias %s='%s'\n", alias, command)
 	fmt.Print(line)
 }
