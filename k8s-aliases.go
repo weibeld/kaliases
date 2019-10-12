@@ -3,14 +3,15 @@ package main
 import (
 	"fmt"
 	"os"
-	"strings"
 )
 
 /* Types */
 
-type Token struct {
+type Pair struct {
 	Short, Long string
 }
+
+type Token []Pair
 
 type Group struct {
 	Tokens            []Token
@@ -102,85 +103,86 @@ var actionsOther = Group{
 /* Action tokens */
 
 var actionGet = Token{
-	Short: "g", Long: "get",
+	{Short: "g", Long: "get"},
 }
 var actionDelete = Token{
-	Short: "d", Long: "delete",
+	{Short: "d", Long: "delete"},
 }
 var actionDescribe = Token{
-	Short: "s", Long: "decribe",
+	{Short: "s", Long: "decribe"},
 }
 var actionEdit = Token{
-	Short: "e", Long: "edit",
+	{Short: "e", Long: "edit"},
 }
 var actionExec = Token{
-	Short: "x", Long: "exec",
+	{Short: "x", Long: "exec"},
 }
 var actionLogs = Token{
-	Short: "l", Long: "logs",
+	{Short: "l", Long: "logs"},
 }
 var actionApply = Token{
-	Short: "a", Long: "apply",
+	{Short: "a", Long: "apply"},
 }
 var actionPortForward = Token{
-	Short: "p", Long: "port-forward",
+	{Short: "p", Long: "port-forward"},
 }
 var actionExplain = Token{
-	Short: "ex", Long: "explain",
+	{Short: "ex", Long: "explain"},
 }
 
 /* Resource tokens */
 
 var resourcePod = Token{
-	Short: "p", Long: "pod",
+	{Short: "p", Long: "pod"},
 }
 var resourceDeployment = Token{
-	Short: "d", Long: "deployment",
+	{Short: "d", Long: "deployment"},
 }
 var resourceService = Token{
-	Short: "s", Long: "service",
+	{Short: "s", Long: "service"},
 }
 var resourceNode = Token{
-	Short: "n", Long: "node",
+	{Short: "n", Long: "node"},
 }
 var resourceIngress = Token{
-	Short: "i", Long: "ingress",
+	{Short: "i", Long: "ingress"},
 }
 var resourceRole = Token{
-	Short: "r", Long: "role",
+	{Short: "r", Long: "role"},
 }
 var resourceRoleBinding = Token{
-	Short: "rb", Long: "rolebinding",
+	{Short: "rb", Long: "rolebinding"},
 }
 var resourceClusterRole = Token{
-	Short: "cr", Long: "clusterrole",
+	{Short: "cr", Long: "clusterrole"},
 }
 var resourceClusterRoleBinding = Token{
-	Short: "crb", Long: "clusterrolebinding",
+	{Short: "crb", Long: "clusterrolebinding"},
 }
 
 /* Option tokens */
 
 var optionWatch = Token{
-	Short: "w", Long: "-w",
+	{Short: "w", Long: "-w"},
 }
 var optionOutput = Token{
-	Short: "y:j", Long: "-o yaml:-o json",
+	{Short: "y", Long: "-o yaml"},
+	{Short: "j", Long: "-o json"},
 }
 var optionAllNamespaces = Token{
-	Short: "a", Long: "--all-namespaces",
+	{Short: "a", Long: "--all-namespaces"},
 }
 var optionAllDelete = Token{
-	Short: "a", Long: "--all",
+	{Short: "a", Long: "--all"},
 }
 var optionAllNamespacesDelete = Token{
-	Short: "A", Long: "--all-namespaces",
+	{Short: "A", Long: "--all-namespaces"},
 }
 var optionInteractive = Token{
-	Short: "i", Long: "-it",
+	{Short: "i", Long: "-it"},
 }
 var optionFollow = Token{
-	Short: "f", Long: "-f",
+	{Short: "f", Long: "-f"},
 }
 
 //==============================================================================
@@ -223,17 +225,15 @@ func generateImpl(set Set, i int, stack []Token) {
 }
 
 func createAlias(tokens []Token) {
-	createAliasImpl(tokens, 0, []Token{})
+	createAliasImpl(tokens, 0, []Pair{})
 }
-func createAliasImpl(tokens []Token, i int, stack []Token) {
+func createAliasImpl(tokens []Token, i int, stack []Pair) {
 	if i == len(tokens) {
 		printAlias(stack)
-		return
-	}
-	shorts := strings.Split(tokens[i].Short, ":")
-	longs := strings.Split(tokens[i].Long, ":")
-	for j, _ := range shorts {
-		createAliasImpl(tokens, i+1, append(stack, Token{Short: shorts[j], Long: longs[j]}))
+	} else {
+		for _, pair := range tokens[i] {
+			createAliasImpl(tokens, i+1, append(stack, pair))
+		}
 	}
 }
 
@@ -241,11 +241,11 @@ func createAliasImpl(tokens []Token, i int, stack []Token) {
 var aliases = map[string]string{}
 
 // Print a single alias definition given its sequence of Tokens
-func printAlias(tokens []Token) {
+func printAlias(pairs []Pair) {
 	alias, command := "k", "kubectl"
-	for _, token := range tokens {
-		alias += token.Short
-		command += " " + token.Long
+	for _, pair := range pairs {
+		alias += pair.Short
+		command += " " + pair.Long
 	}
 	if _, exists := aliases[alias]; exists {
 		fmt.Printf("\033[31m")
