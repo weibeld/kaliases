@@ -287,13 +287,15 @@ func getPermutationsImpl(a []Token, k int, c chan []Token) {
 		x := make([]Token, len(a))
 		copy(x, a)
 		c <- x
-	}
-	for i := 0; i < k; i++ {
+	} else {
 		getPermutationsImpl(a, k-1, c)
-		if k%2 == 0 {
-			a[i], a[k-1] = a[k-1], a[i]
-		} else {
-			a[0], a[k-1] = a[k-1], a[0]
+		for i := 0; i < k-1; i++ {
+			if k%2 == 0 {
+				a[i], a[k-1] = a[k-1], a[i]
+			} else {
+				a[0], a[k-1] = a[k-1], a[0]
+			}
+			getPermutationsImpl(a, k-1, c)
 		}
 	}
 	if k == len(a) {
