@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 )
 
 /* Types */
@@ -164,7 +165,7 @@ var optionWatch = Token{
 	Short: "w", Long: "-w",
 }
 var optionOutput = Token{
-	Short: "y", Long: "-o yaml",
+	Short: "y:j", Long: "-o yaml:-o json",
 }
 var optionAllNamespaces = Token{
 	Short: "a", Long: "--all-namespaces",
@@ -204,7 +205,7 @@ func generateImpl(set Set, i int, stack []Token) {
 	if !set[i].AllowCombinations {
 		for _, token := range set[i].Tokens {
 			stackNew := append(stack, token)
-			printAlias(stackNew)
+			createAlias(stackNew)
 			generateImpl(set, i+1, stackNew)
 		}
 	} else {
@@ -214,14 +215,29 @@ func generateImpl(set Set, i int, stack []Token) {
 		for _, subset := range getSubsets(set[i].Tokens) {
 			for _, permutation := range getPermutations(subset) {
 				stackNew := append(stack, permutation...)
-				printAlias(stackNew)
+				createAlias(stackNew)
 				generateImpl(set, i+1, stackNew)
 			}
 		}
 	}
 }
 
-// Aliases generated so far (to detect clashes)
+func createAlias(tokens []Token) {
+	createAliasImpl(tokens, 0, []Token{})
+}
+func createAliasImpl(tokens []Token, i int, stack []Token) {
+	if i == len(tokens) {
+		printAlias(stack)
+		return
+	}
+	shorts := strings.Split(tokens[i].Short, ":")
+	longs := strings.Split(tokens[i].Long, ":")
+	for j, _ := range shorts {
+		createAliasImpl(tokens, i+1, append(stack, Token{Short: shorts[j], Long: longs[j]}))
+	}
+}
+
+// Aliases generated so far (for detecting name clashes)
 var aliases = map[string]string{}
 
 // Print a single alias definition given its sequence of Tokens
