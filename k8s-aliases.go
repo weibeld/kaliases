@@ -207,7 +207,9 @@ func generateImpl(set Set, i int, stack []Token) {
 	if !set[i].AllowCombinations {
 		for _, token := range set[i].Tokens {
 			stackNew := append(stack, token)
-			createAlias(stackNew)
+			for _, alternative := range getAlternatives(stackNew) {
+				printAlias(alternative)
+			}
 			generateImpl(set, i+1, stackNew)
 		}
 	} else {
@@ -217,22 +219,37 @@ func generateImpl(set Set, i int, stack []Token) {
 		for _, subset := range getSubsets(set[i].Tokens) {
 			for _, permutation := range getPermutations(subset) {
 				stackNew := append(stack, permutation...)
-				createAlias(stackNew)
+				for _, alternative := range getAlternatives(stackNew) {
+					printAlias(alternative)
+				}
 				generateImpl(set, i+1, stackNew)
 			}
 		}
 	}
 }
 
-func createAlias(tokens []Token) {
-	createAliasImpl(tokens, 0, []Pair{})
+func getAlternatives(tokens []Token) [][]Pair {
+	result := [][]Pair{}
+	// Number of expansions (for knowing how many values to receive from channel)
+	total := 1
+	for _, t := range tokens {
+		total = total * len(t)
+	}
+	c := make(chan []Pair)
+	go getAlternativesImpl(tokens, 0, []Pair{}, c)
+	for i := 0; i < total; i++ {
+		result = append(result, <-c)
+	}
+	return result
 }
-func createAliasImpl(tokens []Token, i int, stack []Pair) {
+func getAlternativesImpl(tokens []Token, i int, stack []Pair, c chan []Pair) {
 	if i == len(tokens) {
-		printAlias(stack)
+		stackCopy := make([]Pair, len(stack))
+		copy(stackCopy, stack)
+		c <- stackCopy
 	} else {
 		for _, pair := range tokens[i] {
-			createAliasImpl(tokens, i+1, append(stack, pair))
+			getAlternativesImpl(tokens, i+1, append(stack, pair), c)
 		}
 	}
 }
