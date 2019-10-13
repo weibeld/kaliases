@@ -27,6 +27,7 @@ type Suite []Group
 /* Suites */
 
 var suites = []Suite{
+	Suite{},
 	Suite{actionsGet, resources, optionsGet},
 	Suite{actionsDelete, resources, optionsDelete},
 	Suite{actionsDescribe, resources, optionsDescribe},
@@ -194,7 +195,11 @@ func main() {
 
 // Generate all aliases of a Suite
 func generate(suite Suite) {
-	generateImpl(suite, 0, []Segment{})
+	if len(suite) == 0 {
+		printAlias([]Token{})
+	} else {
+		generateImpl(suite, 0, []Segment{})
+	}
 }
 func generateImpl(suite Suite, i int, stack []Segment) {
 	if i == len(suite) {
