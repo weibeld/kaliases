@@ -59,7 +59,7 @@ var actionsDelete = Group{
 	false,
 }
 var optionsDelete = Group{
-	[]Segment{optionAllDelete, optionAllNamespacesDelete},
+	[]Segment{optionAll, optionAllNamespaces},
 	true,
 }
 
@@ -172,11 +172,8 @@ var optionOutput = Segment{
 var optionAllNamespaces = Segment{
 	{Short: "a", Long: "--all-namespaces"},
 }
-var optionAllDelete = Segment{
-	{Short: "a", Long: "--all"},
-}
-var optionAllNamespacesDelete = Segment{
-	{Short: "A", Long: "--all-namespaces"},
+var optionAll = Segment{
+	{Short: "A", Long: "--all"},
 }
 var optionInteractive = Segment{
 	{Short: "i", Long: "-it"},
