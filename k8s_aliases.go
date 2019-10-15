@@ -194,8 +194,9 @@ func main() {
 // Generate aliases from a list of Suites by ensuring that no two aliases have
 // the same name.
 func generateAliases(suites []Suite) {
+	aliases := map[string]string{}
 	for _, suite := range suites {
-		generateAliasesImpl(suite, 0, []Segment{}, map[string]string{})
+		generateAliasesImpl(suite, 0, []Segment{}, aliases)
 	}
 }
 func generateAliasesImpl(suite Suite, i int, stack []Segment, aliases map[string]string) {
