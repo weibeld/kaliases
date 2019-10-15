@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 )
 
@@ -34,7 +35,6 @@ var suites = []Suite{
 	Suite{actionsExec, optionsExec},
 	Suite{actionsLogs, optionsLogs},
 	Suite{actionsEdit, resources},
-	Suite{actionsOther},
 	Suite{actionsOther},
 }
 
@@ -189,20 +189,21 @@ var optionFollow = Segment{
 //==============================================================================
 
 func main() {
-	generateAliases(suites)
+	generateAliases(suites, os.Stdout)
 }
 
-// Generate aliases from a list of Suites by ensuring that no two aliases have
-// the same name.
-func generateAliases(suites []Suite) {
+// Generate aliases from a list of Suites, ensuring that no two aliases have
+// the same name, and writing them to the provided writer.
+func generateAliases(suites []Suite, out io.Writer) {
 	aliases := map[string]string{}
 	for _, suite := range suites {
-		generateAliasesImpl(suite, 0, []Segment{}, aliases)
+		generateAliasesImpl(suite, 0, []Segment{}, aliases, out)
 	}
 }
-func generateAliasesImpl(suite Suite, i int, stack []Segment, aliases map[string]string) {
+
+func generateAliasesImpl(suite Suite, i int, stack []Segment, aliases map[string]string, out io.Writer) {
 	if len(suite) == 0 {
-		printAlias([]Token{}, aliases)
+		printAlias([]Token{}, aliases, out)
 		return
 	}
 	if i == len(suite) {
@@ -213,9 +214,9 @@ func generateAliasesImpl(suite Suite, i int, stack []Segment, aliases map[string
 		for _, token := range suite[i].Segments {
 			stackNew := append(stack, token)
 			for _, alternative := range getAlternatives(stackNew) {
-				printAlias(alternative, aliases)
+				printAlias(alternative, aliases, out)
 			}
-			generateAliasesImpl(suite, i+1, stackNew, aliases)
+			generateAliasesImpl(suite, i+1, stackNew, aliases, out)
 		}
 	} else {
 		// Group of combinable Segments. All permutations of all subsets:
@@ -224,12 +225,31 @@ func generateAliasesImpl(suite Suite, i int, stack []Segment, aliases map[string
 			for _, permutation := range getPermutations(subset) {
 				stackNew := append(stack, permutation...)
 				for _, alternative := range getAlternatives(stackNew) {
-					printAlias(alternative, aliases)
+					printAlias(alternative, aliases, out)
 				}
-				generateAliasesImpl(suite, i+1, stackNew, aliases)
+				generateAliasesImpl(suite, i+1, stackNew, aliases, out)
 			}
 		}
 	}
+}
+
+// Print a single alias definition given its sequence of Segments
+func printAlias(pairs []Token, aliases map[string]string, out io.Writer) {
+	alias, command := "k", "kubectl"
+	for _, pair := range pairs {
+		alias += pair.Short
+		command += " " + pair.Long
+	}
+	if _, exists := aliases[alias]; exists {
+		fmt.Fprintf(os.Stderr, "\033[31m")
+		fmt.Fprintf(os.Stderr, "Error: conflicting aliases:\n")
+		fmt.Fprintf(os.Stderr, "  Existing: alias %s='%s'\n", alias, aliases[alias])
+		fmt.Fprintf(os.Stderr, "  New:      alias %s='%s'\n", alias, command)
+		fmt.Fprintf(os.Stderr, "\033[m")
+		os.Exit(1)
+	}
+	aliases[alias] = command
+	fmt.Fprintf(out, "alias %s='%s'\n", alias, command)
 }
 
 // Get final sequences of Tokens by expanding any mutually exclusive Tokens
@@ -257,27 +277,6 @@ func getAlternativesImpl(tokens []Segment, i int, stack []Token, c chan []Token)
 			getAlternativesImpl(tokens, i+1, append(stack, pair), c)
 		}
 	}
-}
-
-// Print a single alias definition given its sequence of Segments
-func printAlias(pairs []Token, aliases map[string]string) {
-	alias, command := "k", "kubectl"
-	for _, pair := range pairs {
-		alias += pair.Short
-		command += " " + pair.Long
-	}
-	if _, exists := aliases[alias]; exists {
-		// Print to stderr
-		fmt.Fprintf(os.Stderr, "\033[31m")
-		fmt.Fprintf(os.Stderr, "Error: conflicting aliases:\n")
-		fmt.Fprintf(os.Stderr, "  Existing: alias %s='%s'\n", alias, aliases[alias])
-		fmt.Fprintf(os.Stderr, "  New:      alias %s='%s'\n", alias, command)
-		fmt.Fprintf(os.Stderr, "\033[m")
-		os.Exit(1)
-	}
-	aliases[alias] = command
-	line := fmt.Sprintf("alias %s='%s'\n", alias, command)
-	fmt.Print(line)
 }
 
 // Get all subsets of size > 0 (including the set itself) of a set of Segments
