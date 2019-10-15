@@ -35,6 +35,7 @@ var suites = []Suite{
 	Suite{actionsLogs, optionsLogs},
 	Suite{actionsEdit, resources},
 	Suite{actionsOther},
+	Suite{actionsOther},
 }
 
 /* Groups */
@@ -267,11 +268,11 @@ func printAlias(pairs []Token, aliases map[string]string) {
 	}
 	if _, exists := aliases[alias]; exists {
 		// Print to stderr
-		fmt.Printf("\033[31m")
-		fmt.Printf("Error: conflicting aliases:\n")
-		fmt.Printf("  Existing: alias %s='%s'\n", alias, aliases[alias])
-		fmt.Printf("  New:      alias %s='%s'\n", alias, command)
-		fmt.Printf("\033[m")
+		fmt.Fprintf(os.Stderr, "\033[31m")
+		fmt.Fprintf(os.Stderr, "Error: conflicting aliases:\n")
+		fmt.Fprintf(os.Stderr, "  Existing: alias %s='%s'\n", alias, aliases[alias])
+		fmt.Fprintf(os.Stderr, "  New:      alias %s='%s'\n", alias, command)
+		fmt.Fprintf(os.Stderr, "\033[m")
 		os.Exit(1)
 	}
 	aliases[alias] = command
