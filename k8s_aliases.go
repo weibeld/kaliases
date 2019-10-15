@@ -203,7 +203,7 @@ func generateAliases(suites []Suite, out io.Writer) {
 
 func generateAliasesImpl(suite Suite, i int, stack []Segment, aliases map[string]string, out io.Writer) {
 	if len(suite) == 0 {
-		printAlias([]Token{}, aliases, out)
+		writeAlias([]Token{}, aliases, out)
 		return
 	}
 	if i == len(suite) {
@@ -214,7 +214,7 @@ func generateAliasesImpl(suite Suite, i int, stack []Segment, aliases map[string
 		for _, token := range suite[i].Segments {
 			stackNew := append(stack, token)
 			for _, alternative := range getAlternatives(stackNew) {
-				printAlias(alternative, aliases, out)
+				writeAlias(alternative, aliases, out)
 			}
 			generateAliasesImpl(suite, i+1, stackNew, aliases, out)
 		}
@@ -225,7 +225,7 @@ func generateAliasesImpl(suite Suite, i int, stack []Segment, aliases map[string
 			for _, permutation := range getPermutations(subset) {
 				stackNew := append(stack, permutation...)
 				for _, alternative := range getAlternatives(stackNew) {
-					printAlias(alternative, aliases, out)
+					writeAlias(alternative, aliases, out)
 				}
 				generateAliasesImpl(suite, i+1, stackNew, aliases, out)
 			}
@@ -233,12 +233,13 @@ func generateAliasesImpl(suite Suite, i int, stack []Segment, aliases map[string
 	}
 }
 
-// Print a single alias definition given its sequence of Segments
-func printAlias(pairs []Token, aliases map[string]string, out io.Writer) {
+// Write an alias definition to the provided writer. If an alias with the same
+// name already exists, raise an error.
+func writeAlias(tokens []Token, aliases map[string]string, out io.Writer) {
 	alias, command := "k", "kubectl"
-	for _, pair := range pairs {
-		alias += pair.Short
-		command += " " + pair.Long
+	for _, token := range tokens {
+		alias += token.Short
+		command += " " + token.Long
 	}
 	if _, exists := aliases[alias]; exists {
 		fmt.Fprintf(os.Stderr, "\033[31m")
