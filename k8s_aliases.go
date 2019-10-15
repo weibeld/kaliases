@@ -188,20 +188,21 @@ var optionFollow = Segment{
 //==============================================================================
 
 func main() {
-	for _, suite := range suites {
-		generate(suite)
-	}
+	generateAliases(suites)
 }
 
-// Generate all aliases of a Suite
-func generate(suite Suite) {
-	if len(suite) == 0 {
-		printAlias([]Token{})
-	} else {
-		generateImpl(suite, 0, []Segment{})
+// Generate aliases from a list of Suites by ensuring that no two aliases have
+// the same name.
+func generateAliases(suites []Suite) {
+	for _, suite := range suites {
+		generateAliasesImpl(suite, 0, []Segment{}, map[string]string{})
 	}
 }
-func generateImpl(suite Suite, i int, stack []Segment) {
+func generateAliasesImpl(suite Suite, i int, stack []Segment, aliases map[string]string) {
+	if len(suite) == 0 {
+		printAlias([]Token{}, aliases)
+		return
+	}
 	if i == len(suite) {
 		return
 	}
@@ -210,9 +211,9 @@ func generateImpl(suite Suite, i int, stack []Segment) {
 		for _, token := range suite[i].Segments {
 			stackNew := append(stack, token)
 			for _, alternative := range getAlternatives(stackNew) {
-				printAlias(alternative)
+				printAlias(alternative, aliases)
 			}
-			generateImpl(suite, i+1, stackNew)
+			generateAliasesImpl(suite, i+1, stackNew, aliases)
 		}
 	} else {
 		// Group of combinable Segments. All permutations of all subsets:
@@ -221,9 +222,9 @@ func generateImpl(suite Suite, i int, stack []Segment) {
 			for _, permutation := range getPermutations(subset) {
 				stackNew := append(stack, permutation...)
 				for _, alternative := range getAlternatives(stackNew) {
-					printAlias(alternative)
+					printAlias(alternative, aliases)
 				}
-				generateImpl(suite, i+1, stackNew)
+				generateAliasesImpl(suite, i+1, stackNew, aliases)
 			}
 		}
 	}
@@ -256,17 +257,15 @@ func getAlternativesImpl(tokens []Segment, i int, stack []Token, c chan []Token)
 	}
 }
 
-// Aliases generated so far (for detecting name clashes)
-var aliases = map[string]string{}
-
 // Print a single alias definition given its sequence of Segments
-func printAlias(pairs []Token) {
+func printAlias(pairs []Token, aliases map[string]string) {
 	alias, command := "k", "kubectl"
 	for _, pair := range pairs {
 		alias += pair.Short
 		command += " " + pair.Long
 	}
 	if _, exists := aliases[alias]; exists {
+		// Print to stderr
 		fmt.Printf("\033[31m")
 		fmt.Printf("Error: conflicting aliases:\n")
 		fmt.Printf("  Existing: alias %s='%s'\n", alias, aliases[alias])
