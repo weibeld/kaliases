@@ -1,3 +1,6 @@
-![Logo](kaliases.png)
+# kaliases
 
-Auto-generate your custom set of kubectl shell aliases.
+Customisable auto-generated kubectl aliases.
+
+![Logo](assets/kaliases-medium.png)
+
