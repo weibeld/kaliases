@@ -1,4 +1,4 @@
-package main
+package kaliases
 
 import (
 	"fmt"
@@ -21,187 +21,16 @@ type Group struct {
 
 type Suite []Group
 
-//==============================================================================
-// Declarative part (define your desired behaviour here)
-//==============================================================================
-
-/* Suites */
-
-var suites = []Suite{
-	Suite{},
-	Suite{actionsGet, resources, optionsGet},
-	Suite{actionsDelete, resources, optionsDelete},
-	Suite{actionsDescribe, resources, optionsDescribe},
-	Suite{actionsExec, optionsExec},
-	Suite{actionsLogs, optionsLogs},
-	Suite{actionsEdit, resources},
-	Suite{actionsOther},
-}
-
-/* Groups */
-
-var resources = Group{
-	[]Segment{resourcePod, resourceDeployment, resourceService, resourceNode,
-		resourceIngress, resourceRole, resourceRoleBinding, resourceClusterRole,
-		resourceClusterRoleBinding},
-	false,
-}
-
-var actionsGet = Group{
-	[]Segment{actionGet},
-	false,
-}
-var optionsGet = Group{
-	[]Segment{optionWatch, optionOutput, optionAllNamespaces},
-	true,
-}
-
-var actionsDelete = Group{
-	[]Segment{actionDelete},
-	false,
-}
-var optionsDelete = Group{
-	[]Segment{optionAll, optionAllNamespaces},
-	true,
-}
-
-var actionsDescribe = Group{
-	[]Segment{actionDescribe},
-	false,
-}
-var optionsDescribe = Group{
-	[]Segment{optionAllNamespaces},
-	true,
-}
-
-var actionsExec = Group{
-	[]Segment{actionExec},
-	false,
-}
-var optionsExec = Group{
-	[]Segment{optionInteractive},
-	true,
-}
-
-var actionsLogs = Group{
-	[]Segment{actionLogs},
-	false,
-}
-var optionsLogs = Group{
-	[]Segment{optionFollow},
-	true,
-}
-
-var actionsEdit = Group{
-	[]Segment{actionEdit},
-	false,
-}
-
-var actionsOther = Group{
-	[]Segment{actionApply, actionPortForward, actionExplain},
-	false,
-}
-
-/* Action segments */
-
-var actionGet = Segment{
-	{Short: "g", Long: "get"},
-}
-var actionDelete = Segment{
-	{Short: "d", Long: "delete"},
-}
-var actionDescribe = Segment{
-	{Short: "s", Long: "decribe"},
-}
-var actionEdit = Segment{
-	{Short: "e", Long: "edit"},
-}
-var actionExec = Segment{
-	{Short: "x", Long: "exec"},
-}
-var actionLogs = Segment{
-	{Short: "l", Long: "logs"},
-}
-var actionApply = Segment{
-	{Short: "a", Long: "apply"},
-}
-var actionPortForward = Segment{
-	{Short: "p", Long: "port-forward"},
-}
-var actionExplain = Segment{
-	{Short: "ex", Long: "explain"},
-}
-
-/* Resource segments */
-
-var resourcePod = Segment{
-	{Short: "p", Long: "pod"},
-}
-var resourceDeployment = Segment{
-	{Short: "d", Long: "deployment"},
-}
-var resourceService = Segment{
-	{Short: "s", Long: "service"},
-}
-var resourceNode = Segment{
-	{Short: "n", Long: "node"},
-}
-var resourceIngress = Segment{
-	{Short: "i", Long: "ingress"},
-}
-var resourceRole = Segment{
-	{Short: "r", Long: "role"},
-}
-var resourceRoleBinding = Segment{
-	{Short: "rb", Long: "rolebinding"},
-}
-var resourceClusterRole = Segment{
-	{Short: "cr", Long: "clusterrole"},
-}
-var resourceClusterRoleBinding = Segment{
-	{Short: "crb", Long: "clusterrolebinding"},
-}
-
-/* Option segments */
-
-var optionWatch = Segment{
-	{Short: "w", Long: "-w"},
-}
-var optionOutput = Segment{
-	{Short: "y", Long: "-o yaml"},
-	{Short: "j", Long: "-o json"},
-}
-var optionAllNamespaces = Segment{
-	{Short: "a", Long: "--all-namespaces"},
-}
-var optionAll = Segment{
-	{Short: "A", Long: "--all"},
-}
-var optionInteractive = Segment{
-	{Short: "i", Long: "-it"},
-}
-var optionFollow = Segment{
-	{Short: "f", Long: "-f"},
-}
-
-//==============================================================================
-// Imperative part
-//==============================================================================
-
-func main() {
-	generateAliases(suites, os.Stdout)
-}
-
 // Generate aliases from a list of Suites, ensuring that no two aliases have
 // the same name, and writing them to the provided writer.
-func generateAliases(suites []Suite, out io.Writer) {
+func Generate(suites []Suite, out io.Writer) {
 	aliases := map[string]string{}
 	for _, suite := range suites {
-		generateAliasesImpl(suite, 0, []Segment{}, aliases, out)
+		generateImpl(suite, 0, []Segment{}, aliases, out)
 	}
 }
 
-func generateAliasesImpl(suite Suite, i int, stack []Segment, aliases map[string]string, out io.Writer) {
+func generateImpl(suite Suite, i int, stack []Segment, aliases map[string]string, out io.Writer) {
 	if len(suite) == 0 {
 		writeAlias([]Token{}, aliases, out)
 		return
@@ -216,7 +45,7 @@ func generateAliasesImpl(suite Suite, i int, stack []Segment, aliases map[string
 			for _, alternative := range getAlternatives(stackNew) {
 				writeAlias(alternative, aliases, out)
 			}
-			generateAliasesImpl(suite, i+1, stackNew, aliases, out)
+			generateImpl(suite, i+1, stackNew, aliases, out)
 		}
 	} else {
 		// Group of combinable Segments. All permutations of all subsets:
@@ -227,7 +56,7 @@ func generateAliasesImpl(suite Suite, i int, stack []Segment, aliases map[string
 				for _, alternative := range getAlternatives(stackNew) {
 					writeAlias(alternative, aliases, out)
 				}
-				generateAliasesImpl(suite, i+1, stackNew, aliases, out)
+				generateImpl(suite, i+1, stackNew, aliases, out)
 			}
 		}
 	}
