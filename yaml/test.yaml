@@ -1,0 +1,8 @@
+- single:
+  - { short: g, long: get }
+- single: &resources
+  - { short: p, long: pod }
+  - { short: d, long: deployment }
+- multiple:
+  - { short: "y:j", long: "-o yaml:-o json" }
+  - { short: a, long: --all-namespaces }
