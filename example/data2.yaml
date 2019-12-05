@@ -1,0 +1,7 @@
+- 
+  - 
+    - { short: g, long: get }
+    - { short: d, long: delete }
+  -
+    - { short: p, long: pod }
+    - { short: d, long: deployment }

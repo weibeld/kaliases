@@ -1,0 +1,13 @@
+- 
+  - allowCombinations: false
+    segments:
+      - [{ short: g, long: get }]
+  - &resources allowCombinations: false
+    segments:
+      - [{ short: p, long: pod }]
+      - [{ short: d, long: deployment }]
+- 
+  - allowCombinations: false
+    segments:
+      - [{short: d, long: delete }]
+  - *resources

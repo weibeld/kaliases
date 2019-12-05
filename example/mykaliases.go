@@ -1,7 +1,11 @@
 package main
 
 import (
+	"fmt"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/weibeld/kaliases"
+	"gopkg.in/yaml.v2"
+	"io/ioutil"
 	"os"
 )
 
@@ -164,6 +168,27 @@ var optionFollow = kaliases.Segment{
 	{Short: "f", Long: "-f"},
 }
 
+type Token struct {
+	Short string `yaml:"short"`
+	Long  string `yaml:"long"`
+}
+
+type Group []Token
+
+type Suite []Group
+
 func main() {
-	kaliases.Generate(suites, os.Stdout)
+
+	data, err := ioutil.ReadFile("data2.yaml")
+	if err != nil {
+		panic(err)
+	}
+	m := []Suite{}
+	err = yaml.Unmarshal(data, &m)
+	if err != nil {
+		fmt.Printf("%v\n", err)
+		os.Exit(1)
+	}
+	spew.Printf("%+v\n", m)
+	kaliases.Generate(m, os.Stdout)
 }
