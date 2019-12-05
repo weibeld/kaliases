@@ -1,0 +1,12 @@
+- 
+  -
+    - { short: g, long: get }
+  - &resources
+    - { short: p, long: pod }
+    - { short: d, long: deployment }
+- 
+  -
+    - {short: d, long: delete }
+  - *resources
+
+https://yaml-online-parser.appspot.com/
